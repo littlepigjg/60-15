@@ -80,10 +80,33 @@
   });
 
   audioBtn.addEventListener('click', async () => {
+    if (webrtc.mutedByHost) {
+      UI.toast('你已被主持人禁言，无法开启麦克风');
+      return;
+    }
     const enabled = await webrtc.toggleAudio();
-    audioBtn.classList.toggle('active', enabled);
-    audioBtn.querySelector('span').textContent = enabled ? '麦克风开' : '麦克风';
+    updateAudioBtnUI(enabled);
     UI.toast(enabled ? '麦克风已开启' : '麦克风已关闭');
+  });
+
+  function updateAudioBtnUI(enabled) {
+    audioBtn.classList.toggle('active', enabled);
+    if (webrtc.mutedByHost) {
+      audioBtn.classList.add('disabled');
+      audioBtn.querySelector('span').textContent = '被禁言';
+    } else {
+      audioBtn.classList.remove('disabled');
+      audioBtn.querySelector('span').textContent = enabled ? '麦克风开' : '麦克风';
+    }
+  }
+
+  partList.addEventListener('click', (e) => {
+    const btn = e.target.closest('.host-mute-btn');
+    if (!btn) return;
+    const targetId = btn.dataset.target;
+    const muted = !btn.classList.contains('unmute');
+    signaling.hostMuteAudio(targetId, muted);
+    UI.toast(muted ? '已强制静音该成员' : '已解除该成员禁言');
   });
 
   leaveBtn.addEventListener('click', () => {
@@ -115,6 +138,26 @@
     roomInfo = msg.info;
     renderParticipants(msg.info);
   });
+
+  signaling.on('host-muted', (msg) => {
+    webrtc.setMutedByHost(msg.muted);
+    if (msg.muted) {
+      UI.toast('主持人已将你禁言');
+    } else {
+      UI.toast('主持人已解除你的禁言');
+    }
+    updateAudioBtnUI(webrtc.audioEnabled);
+  });
+
+  signaling.on('audio-blocked', (msg) => {
+    if (msg.reason === 'muted-by-host') {
+      UI.toast('你已被主持人禁言，无法开启麦克风');
+    }
+  });
+
+  webrtc.onMutedByHostChanged = (muted) => {
+    updateAudioBtnUI(webrtc.audioEnabled);
+  };
 
   signaling.on('peer-joined', (msg) => {
     UI.toast(`${msg.name} 加入了房间`);
@@ -180,7 +223,7 @@
   function renderParticipants(info) {
     if (!info) return;
     partCount.textContent = info.clients.length;
-    UI.renderParticipantList(partList, info.clients, signaling.clientId);
+    UI.renderParticipantList(partList, info.clients, signaling.clientId, mode === 'host');
   }
 
   function setupAnnotationTools(ann) {

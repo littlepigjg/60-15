@@ -35,7 +35,7 @@ const UI = {
     );
   },
 
-  renderParticipantList(container, clients, myId) {
+  renderParticipantList(container, clients, myId, isHost) {
     const sorted = [...clients].sort((a, b) => {
       if (a.id === myId) return -1;
       if (b.id === myId) return 1;
@@ -46,20 +46,35 @@ const UI = {
 
     container.innerHTML = sorted.map((c) => {
       const isMe = c.id === myId;
+      const showHostBtn = isHost && !isMe && c.role !== 'host';
+      let audioBadge = '';
+      if (c.mutedByHost) {
+        audioBadge = '<span class="mini-badge audio muted-host" title="被主持人禁言">🚫🔇</span>';
+      } else if (c.audioEnabled) {
+        audioBadge = '<span class="mini-badge audio on" title="麦克风开启">🎙</span>';
+      } else {
+        audioBadge = '<span class="mini-badge audio off" title="麦克风关闭">🔇</span>';
+      }
       return `
-        <li class="participant-item" data-id="${c.id}">
+        <li class="participant-item ${c.mutedByHost ? 'muted-item' : ''}" data-id="${c.id}">
           <div class="participant-info">
             <div class="participant-avatar" style="background:${Utils.getColorFromId(c.id)}">
               ${Utils.initials(c.name)}
             </div>
-            <span class="participant-name" title="${c.name}">${c.name}</span>
+            <span class="participant-name" title="${c.name}">
+              ${c.name}
+              ${c.mutedByHost ? '<span class="muted-tag">被禁言</span>' : ''}
+            </span>
           </div>
           <div class="participant-badges">
             ${isMe ? '<span class="mini-badge me">我</span>' : ''}
             ${c.role === 'host' ? '<span class="mini-badge host">主持</span>' : ''}
-            ${c.audioEnabled
-              ? '<span class="mini-badge audio">🎙</span>'
-              : '<span class="mini-badge audio off">🔇</span>'}
+            ${audioBadge}
+            ${showHostBtn ? `
+              <button class="host-mute-btn ${c.mutedByHost ? 'unmute' : ''}" data-target="${c.id}" title="${c.mutedByHost ? '解除禁言' : '强制静音'}">
+                ${c.mutedByHost ? '🔊' : '🔇'}
+              </button>
+            ` : ''}
           </div>
         </li>
       `;

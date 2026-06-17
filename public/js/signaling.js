@@ -106,6 +106,10 @@ class SignalingClient {
     this.send({ type: 'ice-candidate', to, candidate });
   }
 
+  hostMuteAudio(targetId, muted) {
+    this.send({ type: 'host-mute-audio', targetId, muted });
+  }
+
   isOpen() {
     return this.ws && this.ws.readyState === WebSocket.OPEN;
   }

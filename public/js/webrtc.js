@@ -7,8 +7,10 @@ class WebRTCManager {
     this.remoteStreams = new Map();
     this.localAudioStream = null;
     this.audioEnabled = false;
+    this.mutedByHost = false;
     this.onStreamAdded = null;
     this.onStreamRemoved = null;
+    this.onMutedByHostChanged = null;
   }
 
   async acquireDisplay() {
@@ -56,11 +58,24 @@ class WebRTCManager {
   }
 
   toggleAudio() {
+    if (this.mutedByHost) {
+      return false;
+    }
     if (this.audioEnabled) {
       this.stopAudio();
       return false;
     }
     return this.acquireAudio();
+  }
+
+  setMutedByHost(muted) {
+    this.mutedByHost = muted;
+    if (muted && this.audioEnabled) {
+      this.stopAudio();
+    }
+    if (this.onMutedByHostChanged) {
+      this.onMutedByHostChanged(muted);
+    }
   }
 
   _addAudioToAllPeers() {

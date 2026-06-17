@@ -19,6 +19,7 @@ class SignalingHandler {
     ws.id = randomUUID();
     ws.role = 'viewer';
     ws.audioEnabled = false;
+    ws.mutedByHost = false;
     ws.name = '用户' + Math.floor(Math.random() * 1000);
     ws.send(JSON.stringify({ type: 'connected', clientId: ws.id }));
   }
@@ -73,6 +74,9 @@ class SignalingHandler {
       case 'ice-candidate':
         this.handleIceCandidate(ws, msg);
         break;
+      case 'host-mute-audio':
+        this.handleHostMuteAudio(ws, msg);
+        break;
     }
   }
 
@@ -116,7 +120,8 @@ class SignalingHandler {
         id: c.id,
         role: c.role,
         name: c.name,
-        audioEnabled: c.audioEnabled || false
+        audioEnabled: c.audioEnabled || false,
+        mutedByHost: c.mutedByHost || false
       }))
     };
   }
@@ -244,10 +249,28 @@ class SignalingHandler {
   }
 
   handleToggleAudio(ws, msg) {
+    if (msg.enabled && ws.mutedByHost) {
+      ws.send(JSON.stringify({ type: 'audio-blocked', reason: 'muted-by-host' }));
+      return;
+    }
     ws.audioEnabled = msg.enabled || false;
     if (ws.roomCode) {
       this.broadcastRoomInfo(ws.roomCode);
     }
+  }
+
+  handleHostMuteAudio(ws, msg) {
+    if (ws.role !== 'host' || !ws.roomCode) return;
+    const target = this.findClientById(msg.targetId);
+    if (!target || target.roomCode !== ws.roomCode) return;
+    target.mutedByHost = msg.muted || false;
+    if (target.mutedByHost) {
+      target.audioEnabled = false;
+      target.send(JSON.stringify({ type: 'host-muted', muted: true }));
+    } else {
+      target.send(JSON.stringify({ type: 'host-muted', muted: false }));
+    }
+    this.broadcastRoomInfo(ws.roomCode);
   }
 
   handleRequestOffer(ws, msg) {

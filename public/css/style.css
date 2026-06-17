@@ -252,6 +252,16 @@ body {
   background: #10b981;
 }
 
+.icon-btn.disabled {
+  background: #dc2626;
+  opacity: 0.9;
+  cursor: not-allowed;
+}
+
+.icon-btn.disabled:hover {
+  background: #dc2626;
+}
+
 .icon-btn svg {
   width: 16px;
   height: 16px;
@@ -544,6 +554,59 @@ body {
 .mini-badge.me {
   background: #e0e7ff;
   color: #3730a3;
+}
+
+.mini-badge.audio.muted-host {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.mini-badge.audio.on {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.participant-item.muted-item {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.muted-tag {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 10px;
+  color: #dc2626;
+  background: #fee2e2;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.host-mute-btn {
+  border: none;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1;
+}
+
+.host-mute-btn:hover {
+  background: #dc2626;
+  color: #fff;
+}
+
+.host-mute-btn.unmute {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.host-mute-btn.unmute:hover {
+  background: #059669;
+  color: #fff;
 }
 
 /* Toast */
